@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "System configuration for an individual operator.",
+      "type": "object",
+      "properties": {
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark", "system"],
+          "description": "Ocular interface mode."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last manifest sync."
+        }
+      },
+      "required": ["theme"]
+    },
+    "CartItem": {
+      "title": "Cart Item",
+      "description": "A single piece of loot in an operator's manifest.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "quantity": { "type": "integer" },
+        "image": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "price", "quantity"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System alerts for the operator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "message", "read"]
+    },
+    "WishlistItem": {
+      "title": "Wishlist Item",
+      "description": "Saved loot for later acquisition.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "image": { "type": "string" },
+        "category": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "price"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store for user-specific terminal settings."
+    },
+    "/users/{userId}/cart/{itemId}": {
+      "schema": "CartItem",
+      "description": "Operator's active shopping manifest."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "Critical system alerts delivered to the operator."
+    },
+    "/users/{userId}/wishlist/{itemId}": {
+      "schema": "WishlistItem",
+      "description": "Operator's saved-for-later manifest."
+    },
+    "/system/connection_test": {
+      "schema": { "type": "object", "properties": { "status": { "type": "string" } } },
+      "description": "Mandatory heart-beat document for link verification."
+    }
+  }
+}

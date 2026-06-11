@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Phase 4: Validation Blueprints
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['theme', 'updatedAt']) && 
+             data.keys().size() == 2 &&
+             data.theme is string && data.theme in ['light', 'dark', 'system'] &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidCartItem(data) {
+      return data.keys().hasAll(['id', 'name', 'price', 'quantity']) &&
+             data.keys().size() >= 4 && data.keys().size() <= 6 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 256 &&
+             data.price is number && data.price >= 0 &&
+             data.quantity is int && data.quantity >= 1 &&
+             (!('image' in data) || (data.image is string && data.image.size() <= 1024)) &&
+             (!('updatedAt' in data) || data.updatedAt == request.time);
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['id', 'type', 'message', 'read', 'timestamp']) &&
+             data.keys().size() == 5 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.type is string && data.type in ['info', 'success', 'warning', 'error'] &&
+             data.message is string && data.message.size() <= 1024 &&
+             data.read is bool &&
+             data.timestamp == request.time;
+    }
+
+    function isValidWishlistItem(data) {
+      return data.keys().hasAll(['id', 'name', 'price']) &&
+             data.keys().size() >= 3 && data.keys().size() <= 6 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 256 &&
+             data.price is number && data.price >= 0 &&
+             (!('image' in data) || (data.image is string && data.image.size() <= 1024)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 128)) &&
+             (!('addedAt' in data) || data.addedAt == request.time);
+    }
+
+    // Match Blocks
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['theme', 'updatedAt']);
+    }
+
+    match /users/{userId}/cart/{itemId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(itemId);
+      allow create: if isOwner(userId) && isValidId(itemId) && isValidCartItem(incoming()) && incoming().id == itemId;
+      allow update: if isOwner(userId) && isValidId(itemId) && isValidCartItem(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['quantity', 'updatedAt']) &&
+                    incoming().id == existing().id;
+      allow delete: if isOwner(userId) && isValidId(itemId);
+    }
+
+    match /users/{userId}/notifications/{notifId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(notifId);
+      allow update: if isOwner(userId) && isValidId(notifId) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['read']) &&
+                    isValidNotification(incoming());
+      allow delete: if isOwner(userId) && isValidId(notifId);
+    }
+
+    match /users/{userId}/wishlist/{itemId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(itemId);
+      allow create: if isOwner(userId) && isValidId(itemId) && isValidWishlistItem(incoming()) && incoming().id == itemId;
+      allow update: if isOwner(userId) && isValidId(itemId) && isValidWishlistItem(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['category', 'image']) &&
+                    incoming().id == existing().id;
+      allow delete: if isOwner(userId) && isValidId(itemId);
+    }
+
+    match /system/connection_test {
+      allow get: if isSignedIn();
+    }
+  }
+}
