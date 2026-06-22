@@ -384,12 +384,12 @@ export default function CartSidebar() {
                     isCheckingOut ||
                     (selectedTotal === 0 && cartItems.length > 0)
                   }
-                  className="w-full bg-secondary text-primary py-4 cyber-corners font-display font-black uppercase text-xs tracking-[0.4em] glow-cyan hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:pointer-events-none"
+                  className="cyber-button-primary w-full py-4 text-xs flex items-center justify-center gap-3 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {isCheckingOut ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <ShoppingCart className="w-4 h-4 shadow-primary/20" />
+                    <ShoppingCart className="w-4 h-4" />
                   )}
                   {isCheckingOut ? "PROCESSING..." : checkoutLabel}
                 </button>

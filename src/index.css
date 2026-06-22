@@ -86,16 +86,16 @@
 @layer utilities {
   .grid-bg {
     background-image: 
-      linear-gradient(rgba(var(--color-secondary-rgb), 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(var(--color-secondary-rgb), 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
+      linear-gradient(rgba(var(--color-secondary-rgb), 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--color-secondary-rgb), 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
   .scanlines {
     background: linear-gradient(
       to bottom,
       transparent 50%,
-      rgba(0, 0, 0, 0.15) 50%
+      rgba(0, 0, 0, 0.1) 50%
     );
     background-size: 100% 4px;
     pointer-events: none;
@@ -112,32 +112,32 @@
   }
 
   .glow-cyan {
-    box-shadow: 0 0 20px rgba(var(--color-secondary-rgb), 0.3);
+    box-shadow: 0 0 15px rgba(var(--color-secondary-rgb), 0.2);
   }
   .glow-cyan-sm {
-    box-shadow: 0 0 8px rgba(var(--color-secondary-rgb), 0.4);
+    box-shadow: 0 0 8px rgba(var(--color-secondary-rgb), 0.3);
   }
   .glow-pink {
-    box-shadow: 0 0 20px rgba(var(--color-accent-pink-rgb), 0.3);
+    box-shadow: 0 0 15px rgba(var(--color-accent-pink-rgb), 0.2);
   }
   .text-glow {
-    text-shadow: 0 0 12px rgba(var(--color-secondary-rgb), 0.6);
+    text-shadow: 0 0 10px rgba(var(--color-secondary-rgb), 0.5);
   }
   .text-glow-pink {
-    text-shadow: 0 0 12px rgba(var(--color-accent-pink-rgb), 0.6);
+    text-shadow: 0 0 10px rgba(var(--color-accent-pink-rgb), 0.5);
   }
   
   .glass-panel {
-    @apply bg-surface/80 backdrop-blur-xl border border-secondary/10;
+    @apply bg-surface/70 backdrop-blur-xl border border-secondary/15;
   }
 
-  /* Hardware / Cyber Deck corners */
+  /* Hardware / Cyber Deck corners - SHARPER MINIMALIST 4px */
   .cyber-corners {
     clip-path: polygon(
-      0% 10px, 10px 0%, 
-      calc(100% - 10px) 0%, 100% 10px, 
-      100% calc(100% - 10px), calc(100% - 10px) 100%, 
-      10px 100%, 0% calc(100% - 10px)
+      0% 4px, 4px 0%, 
+      calc(100% - 4px) 0%, 100% 4px, 
+      100% calc(100% - 4px), calc(100% - 4px) 100%, 
+      4px 100%, 0% calc(100% - 4px)
     );
   }
 
@@ -153,6 +153,29 @@
   
   .cyber-border::before { @apply top-0 left-0; }
   .cyber-border::after { @apply bottom-0 right-0; }
+
+  .cyber-panel {
+    @apply bg-surface/80 border border-secondary/20 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_4px_24px_-8px_rgba(0,0,0,0.5)];
+  }
+
+  .cyber-button {
+    clip-path: polygon(0% 4px, 4px 0%, calc(100% - 4px) 0%, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0% calc(100% - 4px));
+    @apply bg-secondary/10 border border-secondary/30 text-secondary font-bold uppercase tracking-widest hover:bg-secondary/20 hover:border-secondary transition-all active:scale-[0.98] shadow-[inset_0_0_10px_rgba(0,229,255,0.05)];
+  }
+
+  .cyber-button-primary {
+    clip-path: polygon(0% 4px, 4px 0%, calc(100% - 4px) 0%, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0% calc(100% - 4px));
+    @apply bg-secondary text-primary font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(0,229,255,0.3)];
+  }
+
+  .cyber-button-accent {
+    clip-path: polygon(0% 4px, 4px 0%, calc(100% - 4px) 0%, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0% calc(100% - 4px));
+    @apply bg-accent-pink text-primary font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(255,42,109,0.3)];
+  }
+
+  .cyber-input {
+    @apply w-full bg-primary/40 border border-secondary/20 rounded-xs py-2 sm:py-2.5 font-mono uppercase tracking-[0.2em] text-text-main placeholder:text-text-dim/50 focus:outline-none focus:border-secondary focus:bg-secondary/10 transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)];
+  }
 
   /* Hardware Acceleration utilities */
   .translate-z-0 {

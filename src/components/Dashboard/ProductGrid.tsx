@@ -240,13 +240,13 @@ export default function ProductGrid({
     <div className="space-y-6 pb-40">
       <div
         className={cn(
-          "sticky top-0 z-20 bg-surface/95 backdrop-blur-md border p-3 sm:p-4 cyber-corners flex flex-col md:flex-row gap-3 sm:gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all",
+          "sticky top-0 z-20 cyber-panel p-3 sm:p-4 flex flex-col md:flex-row gap-3 sm:gap-4 transition-all hover:bg-surface/90",
           searchTerm || selectedCategory !== "all" || sortBy !== "default"
             ? "border-secondary/40 shadow-[0_0_20px_rgba(0,229,255,0.1)]"
             : "border-secondary/20",
         )}
       >
-        <div className="absolute top-0 left-10 w-20 h-[2px] bg-secondary glow-cyan opacity-50" />
+        <div className="absolute top-0 left-10 w-20 h-[1px] bg-secondary opacity-50" />
         <div className="relative flex-1 group w-full">
           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-3 group-focus-within:h-5 bg-secondary shadow-[0_0_5px_#00f3ff] transition-all" />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim group-focus-within:text-secondary group-focus-within:glow-cyan-sm transition-all" />
@@ -255,7 +255,7 @@ export default function ProductGrid({
             placeholder="Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-primary border border-secondary/10 rounded-xs py-2 sm:py-2.5 pl-10 sm:pl-12 pr-4 text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.2em] text-text-main placeholder:text-text-dim/50 dark:placeholder:text-text-dim/30 focus:outline-none focus:border-secondary/40 focus:bg-secondary/5 transition-all"
+            className="cyber-input pl-10 sm:pl-12 pr-4 text-[9px] sm:text-[10px]"
           />
         </div>
 
@@ -265,7 +265,7 @@ export default function ProductGrid({
             <button
               onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
               className={cn(
-                "w-full bg-primary/50 border border-secondary/10 rounded-xs py-2.5 px-4 text-[8px] sm:text-[9px] font-mono uppercase tracking-[0.2em] text-text-dim flex items-center justify-between hover:text-text-main hover:border-secondary/30 transition-all",
+                "cyber-input px-4 flex items-center justify-between text-[8px] sm:text-[9px]",
                 selectedCategory !== "all" &&
                   "text-secondary border-secondary/30",
               )}
@@ -341,12 +341,12 @@ export default function ProductGrid({
             </AnimatePresence>
           </div>
 
-          <div className="relative group flex-1 md:w-32">
-            <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 text-text-dim group-focus-within:text-secondary transition-all" />
+          <div className="relative group flex-1 md:w-40">
+            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-text-dim group-focus-within:text-secondary group-focus-within:glow-cyan-sm transition-all" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="w-full bg-primary/50 border border-secondary/10 rounded-xs py-2.5 pl-7 sm:pl-8 pr-7 sm:pr-8 text-[8px] sm:text-[9px] font-mono uppercase tracking-[0.2em] text-text-dim hover:text-text-main focus:outline-none focus:border-secondary/30 transition-all appearance-none cursor-pointer"
+              className="cyber-input appearance-none pl-8 pr-8 cursor-pointer text-[8px] sm:text-[9px]"
             >
               <option value="default">Relevance</option>
               <option value="price-asc">Price: Low-High</option>
@@ -392,8 +392,8 @@ export default function ProductGrid({
             className="group relative cursor-pointer force-gpu-layer"
             data-product-card
           >
-            <div className="relative h-full bg-surface cyber-border cyber-corners p-5 flex flex-col gap-3 transition-all duration-300 group-hover:bg-secondary/[0.05] group-hover:border-secondary/40 group-hover:shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-sm will-change-transform">
-              <div className="aspect-[4/3] bg-primary relative overflow-hidden group/img cyber-corners border border-secondary/10">
+            <div className="relative h-full cyber-panel cyber-corners p-4 flex flex-col gap-3 transition-all duration-300 group-hover:bg-surface/90 group-hover:border-secondary/50 group-hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_10px_40px_rgba(0,0,0,0.6),0_0_20px_rgba(0,229,255,0.15)] will-change-transform">
+              <div className="aspect-[4/3] bg-primary relative overflow-hidden group/img cyber-corners border border-secondary/20">
                 <LazyImage
                   layoutId={`image-${product.id}`}
                   src={product.image}
@@ -602,7 +602,7 @@ export default function ProductGrid({
                         animateToCart(product.image, rect);
                         addToCart(product);
                       }}
-                      className="w-full bg-secondary text-primary py-2.5 cyber-corners font-black uppercase text-[10px] tracking-[0.3em] glow-cyan hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                      className="cyber-button-primary w-full py-2 flex items-center justify-center gap-2 text-[10px]"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       ADD TO CART
@@ -991,10 +991,10 @@ export default function ProductGrid({
                               animateToCart(selectedProduct.image, rect);
                               addToCart(selectedProduct);
                             }}
-                            className="w-full bg-secondary text-primary py-4 rounded-sm font-black uppercase text-xs tracking-[0.2em] glow-cyan hover:bg-secondary/90 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                            className="cyber-button-primary w-full py-4 text-xs flex items-center justify-center gap-3 active:scale-[0.98]"
                           >
                             <Plus className="w-5 h-5" />
-                            Add to Cart
+                            ADD TO CART
                           </button>
                         )}
                       </div>

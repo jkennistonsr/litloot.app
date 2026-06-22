@@ -153,23 +153,23 @@ export default function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           }}>
                             <div className="space-y-1.5">
                               <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-text-dim">Alias (Read Only)</label>
-                              <input type="text" readOnly disabled value={user?.email || 'N/A'} className="w-full bg-primary/50 text-text-main p-2.5 rounded-sm border border-text-main/10 font-mono text-xs opacity-50" />
+                              <input type="text" readOnly disabled value={user?.email || 'N/A'} className="cyber-input opacity-50 cursor-not-allowed" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1.5">
                                 <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Given Name</label>
-                                <input type="text" defaultValue={user?.displayName?.split(' ')[0] || ''} className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                                <input type="text" defaultValue={user?.displayName?.split(' ')[0] || ''} className="cyber-input" />
                               </div>
                               <div className="space-y-1.5">
                                 <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Surname</label>
-                                <input type="text" defaultValue={user?.displayName?.split(' ')[1] || ''} className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                                <input type="text" defaultValue={user?.displayName?.split(' ')[1] || ''} className="cyber-input" />
                               </div>
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Shipping Matrix (Address)</label>
-                              <input type="text" placeholder="123 Alpha Base, Sector 7..." className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                              <input type="text" placeholder="123 Alpha Base, Sector 7..." className="cyber-input" />
                             </div>
-                            <button type="submit" className="w-full py-2.5 bg-secondary hover:bg-secondary/90 text-primary font-black font-mono uppercase tracking-[0.2em] rounded-xs mt-4">
+                            <button type="submit" className="cyber-button-primary w-full py-2.5 mt-4 text-[10px]">
                               Execute Update
                             </button>
                             <button 

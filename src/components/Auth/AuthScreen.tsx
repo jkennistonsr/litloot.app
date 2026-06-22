@@ -122,7 +122,7 @@ export default function AuthScreen() {
                       placeholder="Username"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-primary border border-text-main/20 rounded-sm py-4 pl-10 pr-4 text-xs font-mono focus:outline-none focus:border-secondary transition-colors"
+                      className="cyber-input pl-10 pr-4 py-3"
                     />
                   </div>
                 </motion.div>
@@ -139,7 +139,7 @@ export default function AuthScreen() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-primary border border-text-main/20 rounded-sm py-4 pl-10 pr-4 text-xs font-mono focus:outline-none focus:border-secondary transition-colors"
+                  className="cyber-input pl-10 pr-4 py-3"
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function AuthScreen() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-primary border border-text-main/20 rounded-sm py-4 pl-10 pr-4 text-xs font-mono focus:outline-none focus:border-secondary transition-colors"
+                  className="cyber-input pl-10 pr-4 py-3"
                 />
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function AuthScreen() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-secondary hover:bg-secondary/90 text-primary py-4 rounded-sm font-black uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-3 mt-4 relative overflow-hidden group shadow-[0_0_20px_rgba(0,229,255,0.3)] hover:shadow-[0_0_35px_rgba(0,229,255,0.5)] active:scale-[0.98] force-gpu-layer"
+              className="cyber-button-primary w-full py-4 text-xs flex items-center justify-center gap-3 mt-4 relative overflow-hidden group shadow-[0_0_20px_rgba(0,229,255,0.3)] hover:shadow-[0_0_35px_rgba(0,229,255,0.5)] active:scale-[0.98] force-gpu-layer"
             >
               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-[45deg]" />
               {loading ? (

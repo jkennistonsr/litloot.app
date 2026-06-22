@@ -64,7 +64,7 @@ export default function Header({ onSettingsClick }: HeaderProps) {
           <input 
             type="text" 
             placeholder="Search products..."
-            className="w-full bg-primary/50 border border-secondary/10 rounded-xs py-2.5 pl-10 pr-4 text-[10px] font-mono uppercase tracking-[0.2em] text-text-main placeholder:text-text-dim/40 dark:placeholder:text-text-dim/20 focus:outline-none focus:border-secondary/40 focus:bg-secondary/5 hover:bg-text-main/5 transition-all duration-300 force-gpu-layer"
+            className="cyber-input pl-10 pr-4 text-[10px]"
           />
         </div>
 

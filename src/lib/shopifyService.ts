@@ -157,8 +157,8 @@ export const fetchShopifyProducts = async (
         // For Storefront API, price is an object with amount. For Admin API, price is a string.
         const priceAmount = variantNode?.price && typeof variantNode.price === 'object' ? variantNode.price.amount : variantNode?.price;
         const compareAtPriceAmount = variantNode?.compareAtPrice && typeof variantNode.compareAtPrice === 'object' ? variantNode.compareAtPrice.amount : variantNode?.compareAtPrice;
-        const priceStr = priceAmount || "0";
-        const compareAtPriceStr = compareAtPriceAmount || undefined;
+        const priceStr = (priceAmount as string) || "0";
+        const compareAtPriceStr = compareAtPriceAmount as string | undefined;
 
         return {
           id: sanitizedId,

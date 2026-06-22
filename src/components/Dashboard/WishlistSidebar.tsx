@@ -308,7 +308,7 @@ export default function WishlistSidebar() {
                   </button>
                   <button 
                     onClick={addAllToCart}
-                    className="flex-1 bg-accent-pink text-primary py-4 cyber-corners font-display font-black uppercase text-[10px] tracking-[0.3em] glow-pink hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="cyber-button-accent py-4 flex-1 flex items-center justify-center gap-2 text-[10px]"
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
                     ACQUIRE ALL
