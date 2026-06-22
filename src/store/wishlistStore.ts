@@ -46,8 +46,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => {
           if (existing) {
             await deleteDoc(itemRef);
           } else {
+            const cleanProduct = Object.fromEntries(
+              Object.entries(product).filter(([_, v]) => v !== undefined)
+            );
             await setDoc(itemRef, {
-              ...product,
+              ...cleanProduct,
               quantity: 1,
               isPinned: false,
               addedAt: serverTimestamp()

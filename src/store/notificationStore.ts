@@ -1,11 +1,23 @@
-import { create } from 'zustand';
-import { useAuthStore } from './authStore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, doc, onSnapshot, updateDoc, deleteDoc, writeBatch, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { create } from "zustand";
+import { useAuthStore } from "./authStore";
+import { db, handleFirestoreError, OperationType } from "../lib/firebase";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  query,
+  orderBy,
+  limit,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export interface Notification {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   message: string;
   timestamp: any;
   read: boolean;
@@ -16,38 +28,42 @@ interface NotificationState {
   isNotifOpen: boolean;
   isInitialized: boolean;
 
+  unsubscribeListener: (() => void) | null;
+
   setIsNotifOpen: (open: boolean) => void;
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => Promise<void>;
+  addNotification: (
+    notification: Omit<Notification, "id" | "timestamp" | "read">,
+  ) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   clearNotifications: () => Promise<void>;
-  
+
   initNotificationListener: () => () => void;
   unreadCount: () => number;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
-    id: 'notif-1',
-    type: 'success',
-    message: 'Purchase successful. Your item is on the way.',
+    id: "notif-1",
+    type: "success",
+    message: "Purchase successful. Your item is on the way.",
     timestamp: Date.now() - 3600000,
     read: false,
   },
   {
-    id: 'notif-2',
-    type: 'info',
-    message: 'New items have been added to the marketplace.',
+    id: "notif-2",
+    type: "info",
+    message: "New items have been added to the marketplace.",
     timestamp: Date.now() - 7200000,
     read: false,
   },
   {
-    id: 'notif-3',
-    type: 'warning',
-    message: 'Connection unstable. Check your network.',
+    id: "notif-3",
+    type: "warning",
+    message: "Connection unstable. Check your network.",
     timestamp: Date.now() - 86400000,
     read: true,
-  }
+  },
 ];
 
 export const useNotificationStore = create<NotificationState>((set, get) => {
@@ -56,59 +72,74 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     isNotifOpen: false,
     isInitialized: false,
 
+    unsubscribeListener: null,
+
     setIsNotifOpen: (open) => set({ isNotifOpen: open }),
-    unreadCount: () => get().notifications.filter(n => !n.read).length,
+    unreadCount: () => get().notifications.filter((n) => !n.read).length,
 
     initNotificationListener: () => {
       const { user } = useAuthStore.getState();
-      let unsubscribe = () => {};
+      const currentUnsubscribe = get().unsubscribeListener;
+      if (currentUnsubscribe) {
+        currentUnsubscribe();
+      }
 
       if (!user) {
-        const saved = localStorage.getItem('litloot_notifications');
-        set({ 
+        set({ unsubscribeListener: null });
+        const saved = localStorage.getItem("litloot_notifications");
+        set({
           notifications: saved ? JSON.parse(saved) : MOCK_NOTIFICATIONS,
-          isInitialized: true 
+          isInitialized: true,
         });
-        return unsubscribe;
+        return () => {};
       }
 
       try {
-        const notifRef = collection(db, 'users', user.uid, 'notifications');
-        const q = query(notifRef, orderBy('timestamp', 'desc'), limit(50));
-        
-        unsubscribe = onSnapshot(q, 
+        const notifRef = collection(db, "users", user.uid, "notifications");
+        const q = query(notifRef, orderBy("timestamp", "desc"), limit(50));
+
+        const unsubscribe = onSnapshot(
+          q,
           (snapshot) => {
-            const items = snapshot.docs.map(doc => {
+            const items = snapshot.docs.map((doc) => {
               const data = doc.data();
               return {
                 ...data,
                 id: doc.id,
-                timestamp: data.timestamp?.toMillis ? data.timestamp.toMillis() : (data.timestamp || Date.now())
+                timestamp: data.timestamp?.toMillis
+                  ? data.timestamp.toMillis()
+                  : data.timestamp || Date.now(),
               } as Notification;
             });
-            
-            const wasEmptyAndUninitialized = !get().isInitialized && items.length === 0;
+
+            const wasEmptyAndUninitialized =
+              !get().isInitialized && items.length === 0;
 
             set({ notifications: items, isInitialized: true });
-            
+
             if (wasEmptyAndUninitialized) {
               setTimeout(() => {
-                 get().addNotification({
-                   message: 'Login successful. Welcome back to LITLOOT.',
-                   type: 'info'
-                 });
+                get().addNotification({
+                  message: "Login successful. Welcome back to LITLOOT.",
+                  type: "info",
+                });
               }, 1000);
             }
           },
           (error) => {
-            handleFirestoreError(error, OperationType.GET, `users/${user.uid}/notifications`);
-          }
+            handleFirestoreError(
+              error,
+              OperationType.GET,
+              `users/${user.uid}/notifications`,
+            );
+          },
         );
+        set({ unsubscribeListener: unsubscribe });
+        return unsubscribe;
       } catch (error) {
-        console.error('Failed to initialize notification listener:', error);
+        console.error("Failed to initialize notification listener:", error);
+        return () => {};
       }
-
-      return unsubscribe;
     },
 
     addNotification: async (notification) => {
@@ -120,7 +151,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
           await addDoc(notifRef, {
             ...notification,
             timestamp: serverTimestamp(),
-            read: false
+            read: false,
           });
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, itemPath);
@@ -134,7 +165,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         };
         set((state) => {
           const updated = [newNotif, ...state.notifications];
-          localStorage.setItem('litloot_notifications', JSON.stringify(updated));
+          localStorage.setItem(
+            "litloot_notifications",
+            JSON.stringify(updated),
+          );
           return { notifications: updated };
         });
       }
@@ -152,10 +186,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         }
       } else {
         set((state) => {
-          const updated = state.notifications.map(notif => 
-            notif.id === id ? { ...notif, read: true } : notif
+          const updated = state.notifications.map((notif) =>
+            notif.id === id ? { ...notif, read: true } : notif,
           );
-          localStorage.setItem('litloot_notifications', JSON.stringify(updated));
+          localStorage.setItem(
+            "litloot_notifications",
+            JSON.stringify(updated),
+          );
           return { notifications: updated };
         });
       }
@@ -168,17 +205,25 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         const basePath = `users/${user.uid}/notifications`;
         try {
           const batch = writeBatch(db);
-          notifications.filter(n => !n.read).forEach(notif => {
-            batch.update(doc(db, basePath, notif.id), { read: true });
-          });
+          notifications
+            .filter((n) => !n.read)
+            .forEach((notif) => {
+              batch.update(doc(db, basePath, notif.id), { read: true });
+            });
           await batch.commit();
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, basePath);
         }
       } else {
         set((state) => {
-          const updated = state.notifications.map(notif => ({ ...notif, read: true }));
-          localStorage.setItem('litloot_notifications', JSON.stringify(updated));
+          const updated = state.notifications.map((notif) => ({
+            ...notif,
+            read: true,
+          }));
+          localStorage.setItem(
+            "litloot_notifications",
+            JSON.stringify(updated),
+          );
           return { notifications: updated };
         });
       }
@@ -191,7 +236,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         const basePath = `users/${user.uid}/notifications`;
         try {
           const batch = writeBatch(db);
-          notifications.forEach(notif => {
+          notifications.forEach((notif) => {
             batch.delete(doc(db, basePath, notif.id));
           });
           await batch.commit();
@@ -200,9 +245,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         }
       } else {
         set({ notifications: [] });
-        localStorage.setItem('litloot_notifications', JSON.stringify([]));
+        localStorage.setItem("litloot_notifications", JSON.stringify([]));
       }
-    }
+    },
   };
 });
 

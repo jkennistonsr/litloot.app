@@ -26,6 +26,9 @@ import { CartAnimationOverlay } from './components/Dashboard/CartAnimationOverla
 import SettingsPanel from './components/Dashboard/SettingsPanel';
 import { AdaptiveWrapper } from './components/Layout/AdaptiveWrapper';
 import { LayoutGrid, ShoppingCart, History, Zap, Settings } from 'lucide-react';
+import { ScrollToTopFab } from './components/Shared/ScrollToTopFab';
+
+import HistoryView from './components/Dashboard/HistoryView';
 
 export type View = 'Dashboard' | 'Marketplace' | 'History' | 'Live Drops';
 
@@ -170,6 +173,8 @@ function AppContent() {
             </div>
           </div>
         );
+      case 'History':
+        return <HistoryView />;
       default:
         return (
           <div className="h-[60vh] flex items-center justify-center text-text-dim gap-3 opacity-50">
@@ -184,8 +189,7 @@ function AppContent() {
     { id: 'Dashboard', icon: LayoutGrid, label: 'Overview' },
     { id: 'Marketplace', icon: ShoppingCart, label: 'Marketplace' },
     { id: 'History', icon: History, label: 'History' },
-    { id: 'Live Drops', icon: Zap, label: 'Live Drops' },
-    { id: 'Settings', icon: Settings, label: 'Settings' }
+    { id: 'Live Drops', icon: Zap, label: 'Live Drops' }
   ];
 
   return (
@@ -199,7 +203,7 @@ function AppContent() {
       }}
       brandName="LITLOOT"
     >
-      <Header />
+      <Header onSettingsClick={() => setIsSettingsOpen(!isSettingsOpen)} />
       <div className="px-4 md:px-8 pb-8 flex-1 w-full pt-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -213,6 +217,7 @@ function AppContent() {
               damping: 30,
               filter: { duration: 0.1 }
             }}
+            style={{ willChange: 'transform, opacity, filter' }}
             className="force-gpu-layer"
           >
             {renderView()}
@@ -223,6 +228,7 @@ function AppContent() {
       <CartSidebar />
       <WishlistSidebar />
       <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      {(currentView === 'Marketplace' || currentView === 'History') && <ScrollToTopFab />}
     </AdaptiveWrapper>
   );
 }

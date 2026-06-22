@@ -91,15 +91,6 @@ export default function Sidebar({ isOpen, onClose, currentView, onViewChange, on
               <span className="text-[10px] font-mono uppercase tracking-widest leading-none">Help</span>
             </a>
           </Tooltip>
-          <Tooltip content="Config & Security" position="top" className="w-full">
-            <button 
-              onClick={onSettingsOpen}
-              className="flex items-center gap-3 px-4 py-3 rounded-sm bg-primary/50 border border-text-main/10 shadow-inner text-text-dim hover:text-secondary hover:border-secondary/30 transition-all hover:bg-secondary/5 group w-full text-left"
-            >
-              <Settings className="w-4 h-4 group-hover:animate-spin-slow transition-colors" />
-              <span className="text-[10px] font-mono uppercase tracking-widest leading-none">Settings</span>
-            </button>
-          </Tooltip>
         </div>
       </div>
     </div>

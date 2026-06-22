@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Bell, ShoppingCart, Heart } from 'lucide-react';
+import { Search, Bell, ShoppingCart, Heart, User } from 'lucide-react';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { useCartStore } from '../../store/cartStore';
@@ -7,12 +7,15 @@ import { useNotificationStore } from '../../store/notificationStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import Tooltip from '../ui/Tooltip';
 import NotificationPanel from './NotificationPanel';
+import ProfileMenu from './ProfileMenu';
 
 interface HeaderProps {
+  onSettingsClick?: () => void;
 }
 
-export default function Header({ }: HeaderProps) {
+export default function Header({ onSettingsClick }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const cartCount = useCartStore(state => state.cartCount());
   const setIsCartOpen = useCartStore(state => state.setIsCartOpen);
   const wishlistItems = useWishlistStore(state => state.wishlistItems);
@@ -161,6 +164,26 @@ export default function Header({ }: HeaderProps) {
               </AnimatePresence>
             </motion.button>
           </Tooltip>
+
+          {onSettingsClick && (
+            <div className="relative">
+              <Tooltip content="Profile & Settings" position="bottom">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="p-2.5 text-text-dim hover:text-secondary hover:bg-secondary/10 rounded-full transition-all duration-300 relative group force-gpu-layer ml-1"
+                >
+                  <User className="w-5 h-5 group-hover:drop-shadow-[0_0_8px_#00f3ff] transition-all" />
+                </motion.button>
+              </Tooltip>
+              <AnimatePresence>
+                {isProfileMenuOpen && (
+                  <ProfileMenu onClose={() => setIsProfileMenuOpen(false)} />
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
         
         <NotificationPanel isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />

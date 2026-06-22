@@ -1,21 +1,68 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { createPortal } from 'react-dom';
-import { ShoppingBag, Terminal, X, Trash2, ShoppingCart, Plus, Minus, CheckSquare, Square, ShieldAlert } from 'lucide-react';
-import { useCartStore } from '../../store/cartStore';
-import Tooltip from '../ui/Tooltip';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { createPortal } from "react-dom";
+import { createShopifyCheckout } from "../../lib/shopifyService";
+import { useNotificationStore } from "../../store/notificationStore";
+import {
+  ShoppingBag,
+  Terminal,
+  X,
+  Trash2,
+  ShoppingCart,
+  Plus,
+  Minus,
+  CheckSquare,
+  Square,
+  ShieldAlert,
+  Loader2,
+  Zap,
+} from "lucide-react";
+import { useCartStore } from "../../store/cartStore";
+import Tooltip from "../ui/Tooltip";
 
 export default function CartSidebar() {
-  const cartItems = useCartStore(state => state.cartItems);
-  const isCartOpen = useCartStore(state => state.isCartOpen);
-  const setIsCartOpen = useCartStore(state => state.setIsCartOpen);
-  const updateQuantity = useCartStore(state => state.updateQuantity);
-  const removeFromCart = useCartStore(state => state.removeFromCart);
-  const purgeItems = useCartStore(state => state.purgeItems);
-  const cartTotal = useCartStore(state => state.cartTotal());
-  const selectedIds = useCartStore(state => state.selectedIds);
-  const toggleSelection = useCartStore(state => state.toggleSelection);
-  const setAllSelected = useCartStore(state => state.setAllSelected);
+  const cartItems = useCartStore((state) => state.cartItems);
+  const isCartOpen = useCartStore((state) => state.isCartOpen);
+  const setIsCartOpen = useCartStore((state) => state.setIsCartOpen);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const purgeItems = useCartStore((state) => state.purgeItems);
+  const cartTotal = useCartStore((state) => state.cartTotal());
+  const selectedIds = useCartStore((state) => state.selectedIds);
+  const toggleSelection = useCartStore((state) => state.toggleSelection);
+  const setAllSelected = useCartStore((state) => state.setAllSelected);
+  const addNotification = useNotificationStore(
+    (state) => state.addNotification,
+  );
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = async () => {
+    const itemsToCheckout = cartItems.filter((item) =>
+      selectedIds.length > 0 ? selectedIds.includes(item.id) : true,
+    );
+    if (itemsToCheckout.length === 0) return;
+
+    setIsCheckingOut(true);
+    try {
+      const url = await createShopifyCheckout(
+        itemsToCheckout.map((item) => ({
+          id: item.variantId || item.id,
+          quantity: item.quantity,
+        })),
+      );
+      window.open(url, "_blank");
+      // If we made it here, purge the checked out items optionally, or just leave it.
+      purgeItems(itemsToCheckout.map((i) => i.id));
+      setIsCartOpen(false);
+    } catch (error: any) {
+      addNotification({
+        type: "error",
+        message: error.message || "Failed to initialize checkout sequence",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   const handlePurge = () => {
     if (selectedIds.length === 0) return;
@@ -27,14 +74,36 @@ export default function CartSidebar() {
   };
 
   const selectedCount = selectedIds.length;
-  const effectiveCheckoutCount = selectedCount > 0 ? selectedCount : cartItems.length;
+  const effectiveCheckoutCount =
+    selectedCount > 0 ? selectedCount : cartItems.length;
   const checkoutLabel = `CHECKOUT (${effectiveCheckoutCount})`;
 
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+
+  const handleApplyPromo = () => {
+    if (promoCode.trim().toUpperCase() === "CYBER20") {
+      setPromoDiscount(0.2);
+      addNotification({
+        message: "Promo codes recognized. 20% discount applied.",
+        type: "success",
+      });
+    } else {
+      setPromoDiscount(0);
+      addNotification({
+        message: "Invalid or expired operational key.",
+        type: "error",
+      });
+    }
+  };
+
   const selectedTotal = cartItems
-    .filter(item => selectedIds.length > 0 ? selectedIds.includes(item.id) : true)
+    .filter((item) =>
+      selectedIds.length > 0 ? selectedIds.includes(item.id) : true,
+    )
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>
@@ -48,29 +117,31 @@ export default function CartSidebar() {
             onClick={() => setIsCartOpen(false)}
             className="fixed inset-0 bg-primary/90 backdrop-blur-sm z-[60] touch-none"
           />
-          
+
           {/* Sidebar */}
-          <motion.section 
-            initial={{ x: '100%' }}
+          <motion.section
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-surface/98 backdrop-blur-xl border-l border-secondary/20 flex flex-col z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.8)] overflow-hidden"
           >
             <div className="p-4 md:p-6 border-b border-secondary/10 flex items-center justify-between relative overflow-hidden">
-               {/* Hardware glow bar side */}
+              {/* Hardware glow bar side */}
               <div className="absolute top-0 right-0 h-full w-[2px] bg-secondary glow-cyan opacity-20" />
-              
+
               <div className="flex items-center gap-3">
                 <ShoppingCart className="w-5 h-5 text-secondary" />
-                <h2 className="text-lg md:text-xl font-display font-black uppercase tracking-widest text-text-main leading-none">Cart</h2>
+                <h2 className="text-lg md:text-xl font-display font-black uppercase tracking-widest text-text-main leading-none">
+                  Cart
+                </h2>
                 {cartItems.length > 0 && (
                   <span className="px-1.5 py-0.5 bg-secondary/20 text-secondary border border-secondary/30 text-[9px] font-mono font-black rounded-xs">
                     {cartItems.length}
                   </span>
                 )}
               </div>
-              <button 
+              <button
                 onClick={() => setIsCartOpen(false)}
                 className="p-2 hover:bg-secondary/10 rounded-xs text-text-dim hover:text-secondary transition-all group"
               >
@@ -82,24 +153,24 @@ export default function CartSidebar() {
               {cartItems.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center px-4 gap-6">
                   <div className="relative">
-                    <motion.div 
-                      animate={{ 
+                    <motion.div
+                      animate={{
                         scale: [1, 1.2, 1],
                         opacity: [0.1, 0.2, 0.1],
                       }}
-                      transition={{ 
-                        duration: 4, 
-                        repeat: Infinity, 
-                        ease: "easeInOut" 
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut",
                       }}
-                      className="absolute inset-0 bg-secondary/20 rounded-full blur-[50px]" 
+                      className="absolute inset-0 bg-secondary/20 rounded-full blur-[50px]"
                     />
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity, 
-                        ease: "easeInOut" 
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
                       }}
                       className="relative z-10"
                     >
@@ -107,12 +178,15 @@ export default function CartSidebar() {
                     </motion.div>
                   </div>
                   <div className="space-y-3 max-w-[240px]">
-                    <h3 className="text-xl font-display font-black uppercase tracking-[0.4em] text-text-main italic glow-cyan-sm">System Empty</h3>
+                    <h3 className="text-xl font-display font-black uppercase tracking-[0.4em] text-text-main italic glow-cyan-sm">
+                      System Empty
+                    </h3>
                     <p className="text-[10px] font-mono text-text-dim uppercase tracking-[0.2em] leading-relaxed opacity-70">
-                      Inventory depleted. Explore the marketplace to acquire new hardware.
+                      Inventory depleted. Explore the marketplace to acquire new
+                      hardware.
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsCartOpen(false)}
                     className="mt-6 px-10 py-4 bg-secondary text-primary border border-secondary font-display font-black uppercase text-xs tracking-[0.3em] cyber-corners transition-all flex items-center gap-3 group glow-cyan hover:brightness-110 active:scale-95"
                   >
@@ -122,15 +196,15 @@ export default function CartSidebar() {
                 </div>
               ) : (
                 cartItems.map((item) => (
-                  <motion.div 
+                  <motion.div
                     layout
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    key={item.id} 
+                    key={item.id}
                     className="flex gap-4 group/item"
                   >
-                    <div 
+                    <div
                       onClick={() => toggleSelection(item.id)}
                       className="flex items-center cursor-pointer py-2"
                     >
@@ -144,42 +218,56 @@ export default function CartSidebar() {
                     </div>
 
                     <div className="w-20 h-20 bg-primary/50 cyber-corners border border-secondary/10 overflow-hidden flex-shrink-0 relative">
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        referrerPolicy="no-referrer" 
-                        className="w-full h-full object-cover opacity-60 group-hover/item:opacity-100 group-hover/item:scale-105 transition-all duration-700" 
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover opacity-60 group-hover/item:opacity-100 group-hover/item:scale-105 transition-all duration-700"
                       />
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-1 text-left">
                       <div>
                         <div className="flex justify-between items-start">
-                          <h3 className="text-[12px] font-display font-black uppercase text-text-main tracking-widest leading-tight line-clamp-1 truncate pr-2 group-hover/item:text-secondary transition-colors">{item.name}</h3>
-                          <span className="text-[11px] font-mono text-secondary text-glow font-black tracking-tighter">${(item.price * item.quantity).toFixed(2)}</span>
+                          <h3 className="text-[12px] font-display font-black uppercase text-text-main tracking-widest leading-tight line-clamp-1 truncate pr-2 group-hover/item:text-secondary transition-colors">
+                            {item.name}
+                          </h3>
+                          <span className="text-[11px] font-mono text-secondary text-glow font-black tracking-tighter">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
                           <div className="w-2 h-[1px] bg-secondary/30" />
-                          <p className="text-[8px] font-mono text-text-dim uppercase tracking-[0.2em]">{item.category}</p>
+                          <p className="text-[8px] font-mono text-text-dim uppercase tracking-[0.2em]">
+                            {item.category}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center bg-primary/40 border border-secondary/20 rounded-xs overflow-hidden h-7">
-                          <button onClick={() => item.quantity === 1 ? removeFromCart(item.id) : updateQuantity(item.id, -1)}
+                          <button
+                            onClick={() =>
+                              item.quantity === 1
+                                ? removeFromCart(item.id)
+                                : updateQuantity(item.id, -1)
+                            }
                             className="px-2.5 h-full text-text-dim hover:text-secondary hover:bg-secondary/10 transition-colors"
                           >
                             <Minus className="w-2.5 h-2.5" />
                           </button>
-                          
-                          <span className="w-8 text-center text-[10px] font-mono font-black text-secondary border-x border-secondary/10 leading-none h-full flex items-center justify-center">{item.quantity}</span>
-                          
-                          <button onClick={() => updateQuantity(item.id, 1)} 
+
+                          <span className="w-8 text-center text-[10px] font-mono font-black text-secondary border-x border-secondary/10 leading-none h-full flex items-center justify-center">
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
                             className="px-2.5 h-full text-text-dim hover:text-secondary hover:bg-secondary/10 transition-colors"
                           >
                             <Plus className="w-2.5 h-2.5" />
                           </button>
                         </div>
-                        <button 
-                          onClick={() => removeFromCart(item.id)} 
+                        <button
+                          onClick={() => removeFromCart(item.id)}
                           className="p-1.5 text-text-dim hover:text-accent-pink hover:bg-accent-pink/10 rounded-xs transition-all opacity-40 hover:opacity-100"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -194,7 +282,7 @@ export default function CartSidebar() {
             {cartItems.length > 0 && (
               <div className="p-4 md:p-8 border-t border-secondary/10 space-y-4 md:space-y-6 bg-primary/20 backdrop-blur-md">
                 <div className="flex items-center justify-between pb-2">
-                  <button 
+                  <button
                     onClick={toggleSelectAll}
                     className="flex items-center gap-3 group/select-all cursor-pointer"
                   >
@@ -205,10 +293,12 @@ export default function CartSidebar() {
                     ) : (
                       <div className="w-4 h-4 border border-secondary/30 group-hover/select-all:border-secondary transition-colors rounded-xs" />
                     )}
-                    <span className="text-[10px] font-mono font-black uppercase tracking-[0.4em] text-text-dim group-hover/select-all:text-secondary transition-colors">all</span>
+                    <span className="text-[10px] font-mono font-black uppercase tracking-[0.4em] text-text-dim group-hover/select-all:text-secondary transition-colors">
+                      all
+                    </span>
                   </button>
                   {selectedIds.length > 0 && (
-                    <motion.button 
+                    <motion.button
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       onClick={handlePurge}
@@ -220,33 +310,88 @@ export default function CartSidebar() {
                   )}
                 </div>
 
+                {/* Promo Code Input */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Zap className="h-3 w-3 text-secondary/50" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-8 pr-3 py-2 border border-secondary/20 bg-primary/30 text-text-main text-[10px] font-mono uppercase tracking-widest placeholder-text-dim/50 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary transition-all cyber-corners"
+                      placeholder="ENTER PROMO KEY"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={handleApplyPromo}
+                    className="px-4 py-2 bg-secondary/10 border border-secondary/30 text-secondary text-[10px] font-mono font-black uppercase hover:bg-secondary/20 hover:text-glow-cyan transition-all cyber-corners"
+                  >
+                    APPLY
+                  </button>
+                </div>
+
                 <div className="relative group">
                   {/* Tactical Data Box */}
                   <div className="bg-secondary/5 border border-secondary/20 cyber-corners p-5 relative overflow-hidden transition-all duration-300 group-hover:bg-secondary/10 group-hover:border-secondary/40">
                     <div className="absolute top-0 left-0 w-[2px] h-full bg-secondary shadow-[0_0_10px_#00f3ff]" />
                     <div className="absolute top-0 right-0 w-16 h-16 bg-secondary/5 rounded-full blur-[30px] -z-10" />
-                    
+
                     <div className="space-y-1 relative z-10">
                       <div className="flex items-center justify-between">
                         <p className="text-[9px] font-mono text-secondary uppercase tracking-[0.4em] font-black flex items-center gap-2">
                           <Terminal className="w-3 h-3" />
                           total
                         </p>
-                        <span className="text-[7px] font-mono text-text-dim uppercase tracking-[0.2em]">LIVE TOTAL</span>
-                      </div>
-                      
-                      <div className="flex items-baseline gap-2 pt-2">
-                        <span className="text-4xl font-display font-black tracking-tighter text-text-main text-glow">
-                          ${selectedTotal.toFixed(2)}
+                        <span className="text-[7px] font-mono text-text-dim uppercase tracking-[0.2em]">
+                          LIVE TOTAL
                         </span>
+                      </div>
+
+                      <div className="flex items-baseline gap-2 pt-2 flex-col">
+                        <div className="flex justify-between w-full">
+                          <span className="text-secondary/60 text-[10px] font-mono uppercase">
+                            SUBTOTAL
+                          </span>
+                          <span className="text-text-dim text-[10px] font-mono">
+                            ${selectedTotal.toFixed(2)}
+                          </span>
+                        </div>
+                        {promoDiscount > 0 && (
+                          <div className="flex justify-between w-full">
+                            <span className="text-accent-pink text-[10px] font-mono uppercase">
+                              DISCOUNT ({(promoDiscount * 100).toFixed(0)}%)
+                            </span>
+                            <span className="text-accent-pink text-[10px] font-mono">
+                              -${(selectedTotal * promoDiscount).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between w-full pt-1 border-t border-secondary/20 mt-1">
+                          <span className="text-4xl font-display font-black tracking-tighter text-text-main text-glow mt-1">
+                            ${(selectedTotal * (1 - promoDiscount)).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                <button className="w-full bg-secondary text-primary py-4 cyber-corners font-display font-black uppercase text-xs tracking-[0.4em] glow-cyan hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                  <ShoppingCart className="w-4 h-4 shadow-primary/20" />
-                  {checkoutLabel}
+
+                <button
+                  onClick={handleCheckout}
+                  disabled={
+                    isCheckingOut ||
+                    (selectedTotal === 0 && cartItems.length > 0)
+                  }
+                  className="w-full bg-secondary text-primary py-4 cyber-corners font-display font-black uppercase text-xs tracking-[0.4em] glow-cyan hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isCheckingOut ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 shadow-primary/20" />
+                  )}
+                  {isCheckingOut ? "PROCESSING..." : checkoutLabel}
                 </button>
               </div>
             )}
@@ -254,6 +399,6 @@ export default function CartSidebar() {
         </>
       )}
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 }

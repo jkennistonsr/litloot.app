@@ -36,7 +36,7 @@ export default function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
   const tabs = [
     { id: 'general', label: 'General', icon: Settings, desc: 'System Configuration' },
-    { id: 'profile', label: 'Profile', icon: User, desc: 'User Account' },
+    { id: 'profile', label: 'Profile', icon: User, desc: 'User Info & Preferences' },
     { id: 'interface', label: 'Interface', icon: Monitor, desc: 'Appearance' },
   ];
 
@@ -129,6 +129,8 @@ export default function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                     </motion.div>
                   )}
 
+
+
                   {activeTab === 'profile' && (
                     <motion.div
                       key="profile"
@@ -137,36 +139,50 @@ export default function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       exit={{ opacity: 0, x: 10 }}
                       className="space-y-8"
                     >
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-xs bg-secondary/10 border border-secondary/30 flex items-center justify-center relative overflow-hidden group">
-                            <User className="w-8 h-8 text-secondary glow-cyan" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-display font-black text-text-main uppercase tracking-wider leading-none">
-                              {user?.displayName || 'USER'}
-                            </h3>
-                            <p className="text-[10px] font-mono text-secondary mt-2 tracking-[0.2em] opacity-100 dark:opacity-70">
-                              {user?.email || 'No email provided'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 rounded-sm bg-primary/50 border border-text-main/10 space-y-4">
-                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-text-dim uppercase">Security Clearance</span>
-                            <span className="text-[10px] font-mono text-secondary uppercase glow-cyan-sm">Verified</span>
-                          </div>
-                          <div className="h-[1px] bg-text-main/5" />
-                          <button 
-                            onClick={() => logout()}
-                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xs bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 hover:border-red-500/40 transition-all text-[10px] font-mono uppercase tracking-[0.3em] font-bold"
-                          >
-                            <LogOut className="w-3.5 h-3.5" />
-                            Log Out
-                          </button>
-                        </div>
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-mono text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
+                          <User className="w-3 h-3" /> Terminal Identity
+                        </h3>
+                        <p className="text-[10px] text-text-dim font-sans leading-relaxed">
+                          Your secured identity matrix. Modify attributes for the marketplace logistics.
+                        </p>
+                        {user ? (
+                          <form className="space-y-4 pt-4" onSubmit={(e) => {
+                            e.preventDefault();
+                            addNotification({ message: 'Profile updated applied.', type: 'success' });
+                          }}>
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-text-dim">Alias (Read Only)</label>
+                              <input type="text" readOnly disabled value={user?.email || 'N/A'} className="w-full bg-primary/50 text-text-main p-2.5 rounded-sm border border-text-main/10 font-mono text-xs opacity-50" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Given Name</label>
+                                <input type="text" defaultValue={user?.displayName?.split(' ')[0] || ''} className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Surname</label>
+                                <input type="text" defaultValue={user?.displayName?.split(' ')[1] || ''} className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-mono uppercase tracking-[0.2em] text-secondary">Shipping Matrix (Address)</label>
+                              <input type="text" placeholder="123 Alpha Base, Sector 7..." className="w-full bg-primary text-text-main p-2.5 rounded-sm border border-secondary/20 focus:border-secondary transition-colors font-sans text-xs outline-none" />
+                            </div>
+                            <button type="submit" className="w-full py-2.5 bg-secondary hover:bg-secondary/90 text-primary font-black font-mono uppercase tracking-[0.2em] rounded-xs mt-4">
+                              Execute Update
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => { logout(); onClose(); }}
+                              className="w-full mt-2 py-2.5 border border-accent-pink/30 hover:bg-accent-pink/5 text-accent-pink text-[10px] uppercase font-mono font-black tracking-[0.2em] rounded-xs flex items-center justify-center gap-2"
+                            >
+                              <LogOut className="w-3.5 h-3.5" /> Terminate Session
+                            </button>
+                          </form>
+                        ) : (
+                          <div className="text-[10px] text-text-dim italic">No identity loaded.</div>
+                        )}
                       </div>
                     </motion.div>
                   )}

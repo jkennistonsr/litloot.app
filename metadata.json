@@ -2,5 +2,5 @@
   "name": "Remix: LitLoot",
   "description": "An advanced, futuristic shopping dashboard for high-end digital and physical loot, powered by Shopify and secure Firebase Authentication.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,15 +1,25 @@
-import { create } from 'zustand';
-import { Product, CartItem } from '../types';
-import { useAuthStore } from './authStore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { create } from "zustand";
+import { Product, CartItem } from "../types";
+import { useAuthStore } from "./authStore";
+import { db, handleFirestoreError, OperationType } from "../lib/firebase";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  serverTimestamp,
+} from "firebase/firestore";
 
 interface CartState {
   cartItems: CartItem[];
   selectedIds: string[];
   isCartOpen: boolean;
   isInitialized: boolean;
-  
+
+  unsubscribeListener: (() => void) | null;
+
   setIsCartOpen: (isOpen: boolean) => void;
   addToCart: (product: Product) => Promise<void>;
   removeFromCart: (id: string) => Promise<void>;
@@ -18,7 +28,7 @@ interface CartState {
   clearCart: () => Promise<void>;
   toggleSelection: (id: string) => void;
   setAllSelected: (selected: boolean) => void;
-  
+
   initCartListener: () => () => void;
   cartCount: () => number;
   cartTotal: () => number;
@@ -30,47 +40,66 @@ export const useCartStore = create<CartState>((set, get) => {
     selectedIds: [],
     isCartOpen: false,
     isInitialized: false,
+    unsubscribeListener: null,
 
     setIsCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
 
-    cartCount: () => get().cartItems.reduce((sum, item) => sum + item.quantity, 0),
-    cartTotal: () => get().cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    cartCount: () =>
+      get().cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    cartTotal: () =>
+      get().cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      ),
 
     initCartListener: () => {
       const { user } = useAuthStore.getState();
-      let unsubscribe = () => {};
+      const currentUnsubscribe = get().unsubscribeListener;
+      if (currentUnsubscribe) {
+        currentUnsubscribe();
+      }
 
       if (!user) {
-        const saved = localStorage.getItem('litloot_cart');
-        const savedSelection = localStorage.getItem('litloot_cart_selection');
-        set({ 
+        const saved = localStorage.getItem("litloot_cart");
+        const savedSelection = localStorage.getItem("litloot_cart_selection");
+        set({
           cartItems: saved ? JSON.parse(saved) : [],
           selectedIds: savedSelection ? JSON.parse(savedSelection) : [],
-          isInitialized: true
+          isInitialized: true,
+          unsubscribeListener: null,
         });
-        return unsubscribe;
+        return () => {};
       }
 
       try {
-        const cartRef = collection(db, 'users', user.uid, 'cart');
-        unsubscribe = onSnapshot(cartRef, 
+        const cartRef = collection(db, "users", user.uid, "cart");
+        const unsubscribe = onSnapshot(
+          cartRef,
           (snapshot) => {
-            const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CartItem));
+            const items = snapshot.docs.map(
+              (doc) => ({ ...doc.data(), id: doc.id }) as CartItem,
+            );
             set({ cartItems: items, isInitialized: true });
           },
           (error) => {
-            handleFirestoreError(error, OperationType.GET, `users/${user.uid}/cart`);
-          }
+            handleFirestoreError(
+              error,
+              OperationType.GET,
+              `users/${user.uid}/cart`,
+            );
+          },
         );
+        set({ unsubscribeListener: unsubscribe });
+        return unsubscribe;
       } catch (error) {
-        console.error('Failed to initialize cart listener:', error);
+        console.error("Failed to initialize cart listener:", error);
       }
-      return unsubscribe;
+      return () => {};
     },
 
     addToCart: async (product) => {
       const { cartItems } = get();
-      const existing = cartItems.find(item => item.id === product.id);
+      const existing = cartItems.find((item) => item.id === product.id);
       const newQty = existing ? existing.quantity + 1 : 1;
       const user = useAuthStore.getState().user;
 
@@ -78,20 +107,25 @@ export const useCartStore = create<CartState>((set, get) => {
         const itemPath = `users/${user.uid}/cart/${product.id}`;
         try {
           const itemRef = doc(db, itemPath);
+          const cleanProduct = Object.fromEntries(
+            Object.entries(product).filter(([_, v]) => v !== undefined),
+          );
           await setDoc(itemRef, {
-            ...product,
+            ...cleanProduct,
             quantity: newQty,
-            updatedAt: serverTimestamp()
+            updatedAt: serverTimestamp(),
           });
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, itemPath);
         }
       } else {
         set((state) => {
-          const newItems = existing 
-            ? state.cartItems.map(item => item.id === product.id ? { ...item, quantity: newQty } : item)
+          const newItems = existing
+            ? state.cartItems.map((item) =>
+                item.id === product.id ? { ...item, quantity: newQty } : item,
+              )
             : [...state.cartItems, { ...product, quantity: 1 }];
-          localStorage.setItem('litloot_cart', JSON.stringify(newItems));
+          localStorage.setItem("litloot_cart", JSON.stringify(newItems));
           return { cartItems: newItems };
         });
       }
@@ -109,8 +143,8 @@ export const useCartStore = create<CartState>((set, get) => {
         }
       } else {
         set((state) => {
-          const newItems = state.cartItems.filter(item => item.id !== id);
-          localStorage.setItem('litloot_cart', JSON.stringify(newItems));
+          const newItems = state.cartItems.filter((item) => item.id !== id);
+          localStorage.setItem("litloot_cart", JSON.stringify(newItems));
           return { cartItems: newItems };
         });
       }
@@ -118,7 +152,7 @@ export const useCartStore = create<CartState>((set, get) => {
 
     updateQuantity: async (id, delta) => {
       const { cartItems } = get();
-      const item = cartItems.find(i => i.id === id);
+      const item = cartItems.find((i) => i.id === id);
       if (!item) return;
 
       const newQty = Math.max(1, item.quantity + delta);
@@ -128,17 +162,23 @@ export const useCartStore = create<CartState>((set, get) => {
         const itemPath = `users/${user.uid}/cart/${id}`;
         try {
           const itemRef = doc(db, itemPath);
-          await setDoc(itemRef, { 
-            quantity: newQty,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
+          await setDoc(
+            itemRef,
+            {
+              quantity: newQty,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true },
+          );
         } catch (error) {
           handleFirestoreError(error, OperationType.UPDATE, itemPath);
         }
       } else {
         set((state) => {
-          const newItems = state.cartItems.map(i => i.id === id ? { ...i, quantity: newQty } : i);
-          localStorage.setItem('litloot_cart', JSON.stringify(newItems));
+          const newItems = state.cartItems.map((i) =>
+            i.id === id ? { ...i, quantity: newQty } : i,
+          );
+          localStorage.setItem("litloot_cart", JSON.stringify(newItems));
           return { cartItems: newItems };
         });
       }
@@ -150,7 +190,7 @@ export const useCartStore = create<CartState>((set, get) => {
         const basePath = `users/${user.uid}/cart`;
         try {
           const batch = writeBatch(db);
-          ids.forEach(id => {
+          ids.forEach((id) => {
             batch.delete(doc(db, basePath, id));
           });
           await batch.commit();
@@ -159,8 +199,10 @@ export const useCartStore = create<CartState>((set, get) => {
         }
       } else {
         set((state) => {
-          const newItems = state.cartItems.filter(item => !ids.includes(item.id));
-          localStorage.setItem('litloot_cart', JSON.stringify(newItems));
+          const newItems = state.cartItems.filter(
+            (item) => !ids.includes(item.id),
+          );
+          localStorage.setItem("litloot_cart", JSON.stringify(newItems));
           return { cartItems: newItems };
         });
       }
@@ -173,7 +215,7 @@ export const useCartStore = create<CartState>((set, get) => {
         const basePath = `users/${user.uid}/cart`;
         try {
           const batch = writeBatch(db);
-          cartItems.forEach(item => {
+          cartItems.forEach((item) => {
             batch.delete(doc(db, basePath, item.id));
           });
           await batch.commit();
@@ -182,17 +224,20 @@ export const useCartStore = create<CartState>((set, get) => {
         }
       } else {
         set({ cartItems: [] });
-        localStorage.setItem('litloot_cart', JSON.stringify([]));
+        localStorage.setItem("litloot_cart", JSON.stringify([]));
       }
     },
 
     toggleSelection: (id) => {
       set((state) => {
-        const newIds = state.selectedIds.includes(id) 
-          ? state.selectedIds.filter(i => i !== id) 
+        const newIds = state.selectedIds.includes(id)
+          ? state.selectedIds.filter((i) => i !== id)
           : [...state.selectedIds, id];
         if (!useAuthStore.getState().user) {
-          localStorage.setItem('litloot_cart_selection', JSON.stringify(newIds));
+          localStorage.setItem(
+            "litloot_cart_selection",
+            JSON.stringify(newIds),
+          );
         }
         return { selectedIds: newIds };
       });
@@ -200,13 +245,16 @@ export const useCartStore = create<CartState>((set, get) => {
 
     setAllSelected: (selected) => {
       set((state) => {
-        const newIds = selected ? state.cartItems.map(item => item.id) : [];
+        const newIds = selected ? state.cartItems.map((item) => item.id) : [];
         if (!useAuthStore.getState().user) {
-          localStorage.setItem('litloot_cart_selection', JSON.stringify(newIds));
+          localStorage.setItem(
+            "litloot_cart_selection",
+            JSON.stringify(newIds),
+          );
         }
         return { selectedIds: newIds };
       });
-    }
+    },
   };
 });
 

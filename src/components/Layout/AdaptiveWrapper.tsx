@@ -127,7 +127,7 @@ export function AdaptiveWrapper({
 
       {/* Core Content Layer */}
       <main className={cn("flex-1 flex flex-col h-screen overflow-hidden relative", gpuClass)}>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-primary scroll-smooth overscroll-behavior-none">
+        <div id="main-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden bg-primary scroll-smooth overscroll-behavior-none">
            {/* Mobile spatial logic explicitly pads bottom to prevent overlap with the Compact Bottom Nav */}
            <div className={cn("min-h-full flex flex-col relative", isCompact && "pb-[80px]", gpuClass)}>
               {children}
