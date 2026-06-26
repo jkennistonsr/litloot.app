@@ -21,7 +21,7 @@ interface CartState {
   unsubscribeListener: (() => void) | null;
 
   setIsCartOpen: (isOpen: boolean) => void;
-  addToCart: (product: Product) => Promise<void>;
+  addToCart: (product: Product, quantityToAdd?: number) => Promise<void>;
   removeFromCart: (id: string) => Promise<void>;
   updateQuantity: (id: string, delta: number) => Promise<void>;
   purgeItems: (ids: string[]) => Promise<void>;
@@ -97,10 +97,10 @@ export const useCartStore = create<CartState>((set, get) => {
       return () => {};
     },
 
-    addToCart: async (product) => {
+    addToCart: async (product, quantityToAdd = 1) => {
       const { cartItems } = get();
       const existing = cartItems.find((item) => item.id === product.id);
-      const newQty = existing ? existing.quantity + 1 : 1;
+      const newQty = existing ? existing.quantity + quantityToAdd : quantityToAdd;
       const user = useAuthStore.getState().user;
 
       if (user) {
@@ -124,7 +124,7 @@ export const useCartStore = create<CartState>((set, get) => {
             ? state.cartItems.map((item) =>
                 item.id === product.id ? { ...item, quantity: newQty } : item,
               )
-            : [...state.cartItems, { ...product, quantity: 1 }];
+            : [...state.cartItems, { ...product, quantity: quantityToAdd }];
           localStorage.setItem("litloot_cart", JSON.stringify(newItems));
           return { cartItems: newItems };
         });
