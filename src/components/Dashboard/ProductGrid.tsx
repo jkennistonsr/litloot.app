@@ -133,6 +133,11 @@ export default function ProductGrid({
 
   const addToCart = useCartStore((state) => state.addToCart);
   const cartItems = useCartStore((state) => state.cartItems);
+  const cartItemsMap = useMemo(() => {
+    const map = new Map();
+    cartItems.forEach(item => map.set(item.id, item));
+    return map;
+  }, [cartItems]);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const animateToCart = useCartAnimationStore((state) => state.animateToCart);
@@ -535,14 +540,12 @@ export default function ProductGrid({
                   className="flex gap-2 mt-auto pt-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {cartItems.find((item) => item.id === product.id) ? (
+                  {cartItemsMap.get(product.id) ? (
                     <div className="w-full flex items-center justify-between bg-secondary/5 border border-secondary/40 rounded-xs h-10 group/qty">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const item = cartItems.find(
-                            (i) => i.id === product.id,
-                          );
+                          const item = cartItemsMap.get(product.id);
                           if (item && item.quantity === 1) {
                             removeFromCart(product.id);
                           } else {
@@ -558,7 +561,7 @@ export default function ProductGrid({
                         <AnimatePresence mode="wait">
                           <motion.span
                             key={
-                              cartItems.find((item) => item.id === product.id)
+                              cartItemsMap.get(product.id)
                                 ?.quantity
                             }
                             initial={{ y: 5, opacity: 0 }}
@@ -566,7 +569,7 @@ export default function ProductGrid({
                             className="text-[12px] font-mono font-black text-secondary text-glow leading-none"
                           >
                             {
-                              cartItems.find((item) => item.id === product.id)
+                              cartItemsMap.get(product.id)
                                 ?.quantity
                             }
                           </motion.span>
@@ -919,7 +922,7 @@ export default function ProductGrid({
                       </div>
 
                       <div className="pt-2">
-                        {cartItems.find((item) => item.id === selectedId) ? (
+                        {cartItemsMap.get(selectedId) ? (
                           <div className="w-full flex items-center justify-between bg-primary/20 border border-secondary/30 rounded-sm h-14 shadow-glow-cyan/5">
                             <motion.button
                               whileHover={{
@@ -928,9 +931,7 @@ export default function ProductGrid({
                               whileTap={{ scale: 0.8, rotate: -90 }}
                               onClick={() => {
                                 if (selectedProduct) {
-                                  const item = cartItems.find(
-                                    (i) => i.id === selectedId,
-                                  );
+                                  const item = cartItemsMap.get(selectedId);
                                   if (item && item.quantity === 1) {
                                     removeFromCart(selectedId);
                                   } else {
@@ -947,9 +948,7 @@ export default function ProductGrid({
                               <AnimatePresence mode="wait">
                                 <motion.span
                                   key={
-                                    cartItems.find(
-                                      (item) => item.id === selectedId,
-                                    )?.quantity
+                                    cartItemsMap.get(selectedId)?.quantity
                                   }
                                   initial={{ y: 10, opacity: 0 }}
                                   animate={{ y: 0, opacity: 1 }}
@@ -957,9 +956,7 @@ export default function ProductGrid({
                                   className="text-2xl font-mono font-black text-secondary text-glow leading-none"
                                 >
                                   {
-                                    cartItems.find(
-                                      (item) => item.id === selectedId,
-                                    )?.quantity
+                                    cartItemsMap.get(selectedId)?.quantity
                                   }
                                 </motion.span>
                               </AnimatePresence>
