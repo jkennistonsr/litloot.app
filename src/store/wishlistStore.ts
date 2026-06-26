@@ -164,12 +164,7 @@ export const useWishlistStore = create<WishlistState>((set, get) => {
       if (selected.length === 0) return;
 
       const addToCart = useCartStore.getState().addToCart;
-      for (const item of selected) {
-        // Add to cart with the wishlist quantity
-        for (let i = 0; i < item.quantity; i++) {
-          await addToCart(item);
-        }
-      }
+      await Promise.all(selected.map(item => addToCart(item, item.quantity)));
 
       // Optionally keep them in wishlist but deselect, or remove?
       // User said "add selected button", usually implies keeping but maybe clearing selection
@@ -179,11 +174,7 @@ export const useWishlistStore = create<WishlistState>((set, get) => {
     addAllToCart: async () => {
       const items = get().wishlistItems;
       const addToCart = useCartStore.getState().addToCart;
-      for (const item of items) {
-        for (let i = 0; i < item.quantity; i++) {
-          await addToCart(item);
-        }
-      }
+      await Promise.all(items.map(item => addToCart(item, item.quantity)));
     },
 
     reorderItems: (newItems) => {
